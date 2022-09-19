@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,34 +24,35 @@ namespace UdemyIdentityServer.Client1
             services.AddScoped<IApiResourceHttpClient, ApiResourceHttpClient>();
 
             services.AddAuthentication(opts =>
-            {
-                opts.DefaultScheme = "Cookies";
-                opts.DefaultChallengeScheme = "oidc";
-            }).AddCookie("Cookies", opts =>
-            {
-                opts.AccessDeniedPath = "/Home/AccessDenied";
-            }).AddOpenIdConnect("oidc", opts =>
-            {
-                opts.SignInScheme = "Cookies";
-                opts.Authority = "https://localhost:5001";
-                opts.ClientId = "Client1-Mvc";
-                opts.ClientSecret = "secret";
-                opts.ResponseType = "code id_token";
-                opts.GetClaimsFromUserInfoEndpoint = true;
-                opts.SaveTokens = true;
-                opts.Scope.Add("api1.read");
-                opts.Scope.Add("offline_access");
-                opts.Scope.Add("CountryAndCity");
-                opts.Scope.Add("Roles");
-                opts.ClaimActions.MapUniqueJsonKey("country", "country");
-                opts.ClaimActions.MapUniqueJsonKey("city", "city");
-                opts.ClaimActions.MapUniqueJsonKey("role", "role");
-
-                opts.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                 {
-                    RoleClaimType = "role"
-                };
-            });
+                    opts.DefaultScheme = "Cookies";
+                    opts.DefaultChallengeScheme = "oidc";
+                })
+                .AddCookie("Cookies", opts => { opts.AccessDeniedPath = "/Home/AccessDenied"; })
+                .AddOpenIdConnect("oidc",
+                    opts =>
+                    {
+                        opts.SignInScheme = "Cookies";
+                        opts.Authority = "https://localhost:5001";
+                        opts.ClientId = "Client1-Mvc";
+                        opts.ClientSecret = "secret";
+                        opts.ResponseType = "code id_token";
+                        opts.GetClaimsFromUserInfoEndpoint = true;  //Cookie'ye userinfo endpoint'inden gelen verileri ekler
+                        opts.SaveTokens = true; //Cookie'ye Accesstoken ile refresh token'ı ekler
+                        opts.Scope.Add("api1.read");
+                        opts.Scope.Add("offline_access");
+                        opts.Scope.Add("CountryAndCity");
+                        opts.Scope.Add("Roles");
+                        opts.ClaimActions.MapUniqueJsonKey("country", "country");
+                        opts.ClaimActions.MapUniqueJsonKey("city", "city");
+                        opts.ClaimActions.MapUniqueJsonKey("role", "role");
+
+                        opts.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                        {
+                            RoleClaimType = "role", //Cookie'de hangi key'e bakarak role verisini kontrol edeceğini belirtir
+                            NameClaimType = "name"
+                        };
+                    });
 
             services.AddControllersWithViews();
         }
@@ -74,6 +70,7 @@ namespace UdemyIdentityServer.Client1
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
